@@ -1,5 +1,5 @@
 """
-ASGI config for CAHTS project.
+ASGI config for chats project.
 """
 
 import os

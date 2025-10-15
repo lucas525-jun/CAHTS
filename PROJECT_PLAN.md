@@ -1,4 +1,4 @@
-# CAHTS - Cross-Platform Chat Aggregation System
+# chats - Cross-Platform Chat Aggregation System
 ## Comprehensive Project Plan
 
 ### Project Overview
@@ -336,7 +336,7 @@ DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
 # Database
-DATABASE_URL=postgresql://cahts:cahts_password@db:5432/cahts_db
+DATABASE_URL=postgresql://chats:chats_password@db:5432/chats_db
 
 # Redis
 REDIS_URL=redis://redis:6379/0
@@ -482,7 +482,7 @@ VITE_WS_URL=ws://localhost:8000/ws
 ```bash
 # Clone repository
 git clone <repo-url>
-cd CAHTS
+cd chats
 
 # Copy environment files
 cp backend/.env.example backend/.env

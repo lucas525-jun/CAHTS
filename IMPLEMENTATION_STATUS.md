@@ -1,4 +1,4 @@
-# CAHTS Implementation Status
+# chats Implementation Status
 
 ## Completed Tasks
 
@@ -209,7 +209,7 @@
 ## File Structure Created
 
 ```
-CAHTS/
+chats/
 ├── backend/
 │   ├── config/
 │   │   ├── __init__.py

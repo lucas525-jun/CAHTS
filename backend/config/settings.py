@@ -1,5 +1,5 @@
 """
-Django settings for CAHTS project.
+Django settings for chats project.
 """
 
 from pathlib import Path
@@ -84,7 +84,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgresql://cahts:cahts_password@localhost:5432/cahts_db')
+    'default': env.db('DATABASE_URL', default='postgresql://chats:chats_password@localhost:5432/chats_db')
 }
 
 # Password validation
@@ -195,7 +195,7 @@ WHATSAPP_BUSINESS_ACCOUNT_ID = env('WHATSAPP_BUSINESS_ACCOUNT_ID', default='')
 WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN', default='')
 
 # Webhook Configuration
-WEBHOOK_VERIFY_TOKEN = env('WEBHOOK_VERIFY_TOKEN', default='cahts-webhook-token')
+WEBHOOK_VERIFY_TOKEN = env('WEBHOOK_VERIFY_TOKEN', default='chats-webhook-token')
 
 # Encryption Key for Platform Tokens
 ENCRYPTION_KEY = env('ENCRYPTION_KEY', default='').encode() if env('ENCRYPTION_KEY', default='') else None

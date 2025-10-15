@@ -1,4 +1,4 @@
-# CAHTS - Cross-Platform Chat Aggregation System
+# chats - Cross-Platform Chat Aggregation System
 
 A unified dashboard for managing Instagram, Messenger, and WhatsApp messages with real-time synchronization, analytics, and multi-platform authentication.
 
@@ -34,7 +34,7 @@ A unified dashboard for managing Instagram, Messenger, and WhatsApp messages wit
 ## Project Structure
 
 ```
-CAHTS/
+chats/
 ├── backend/                    # Django backend
 │   ├── config/                 # Django settings and configuration
 │   ├── apps/
@@ -74,7 +74,7 @@ CAHTS/
 
 ```bash
 git clone <repository-url>
-cd CAHTS
+cd chats
 ```
 
 ### 2. Configure Environment Variables
@@ -239,7 +239,7 @@ docker-compose up -d --build
 docker-compose exec backend python manage.py [command]
 
 # Access database
-docker-compose exec db psql -U cahts -d cahts_db
+docker-compose exec db psql -U chats -d chats_db
 
 # Access Redis CLI
 docker-compose exec redis redis-cli
@@ -315,7 +315,7 @@ ws.onmessage = (event) => {
 docker-compose logs backend
 
 # Ensure database is ready
-docker-compose exec db pg_isready -U cahts
+docker-compose exec db pg_isready -U chats
 
 # Run migrations manually
 docker-compose exec backend python manage.py migrate

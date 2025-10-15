@@ -1,6 +1,6 @@
-# CAHTS Setup Guide
+# chats Setup Guide
 
-Complete step-by-step guide to set up the CAHTS project.
+Complete step-by-step guide to set up the chats project.
 
 ## Table of Contents
 
@@ -78,7 +78,7 @@ docker compose version
 2. **Create New App**
    - Click "Create App"
    - Select "Business" type
-   - Enter app name (e.g., "CAHTS Integration")
+   - Enter app name (e.g., "chats Integration")
    - Enter contact email
    - Click "Create App"
 
@@ -188,7 +188,7 @@ WHATSAPP_ACCESS_TOKEN=your-permanent-access-token
 
 ```bash
 git clone <repository-url>
-cd CAHTS
+cd chats
 ```
 
 ### Configure Backend Environment
@@ -214,7 +214,7 @@ DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1,backend
 
 # Database (use these for Docker setup)
-DATABASE_URL=postgresql://cahts:cahts_password@db:5432/cahts_db
+DATABASE_URL=postgresql://chats:chats_password@db:5432/chats_db
 
 # Redis
 REDIS_URL=redis://redis:6379/0
@@ -295,12 +295,12 @@ docker-compose ps
 
 # Expected output:
 # NAME                  STATUS    PORTS
-# cahts_backend         Up        0.0.0.0:8000->8000/tcp
-# cahts_celery          Up
-# cahts_celery_beat     Up
-# cahts_db              Up        0.0.0.0:5432->5432/tcp
-# cahts_frontend        Up        0.0.0.0:5173->5173/tcp
-# cahts_redis           Up        0.0.0.0:6379->6379/tcp
+# chats_backend         Up        0.0.0.0:8000->8000/tcp
+# chats_celery          Up
+# chats_celery_beat     Up
+# chats_db              Up        0.0.0.0:5432->5432/tcp
+# chats_frontend        Up        0.0.0.0:5173->5173/tcp
+# chats_redis           Up        0.0.0.0:6379->6379/tcp
 ```
 
 ### View Logs
@@ -339,7 +339,7 @@ docker-compose exec backend python manage.py createsuperuser
 
 ```bash
 # Connect to PostgreSQL
-docker-compose exec db psql -U cahts -d cahts_db
+docker-compose exec db psql -U chats -d chats_db
 
 # List tables
 \dt
@@ -370,7 +370,7 @@ curl http://localhost:8000/api/auth/me
 ### Test Frontend
 
 1. Open browser to http://localhost:5173
-2. You should see the CAHTS dashboard
+2. You should see the chats dashboard
 3. Navigate to different pages (Dashboard, Chats)
 
 ### Test Redis
@@ -431,7 +431,7 @@ docker-compose ps db
 docker-compose logs db
 
 # Verify DATABASE_URL in backend/.env
-# Should be: postgresql://cahts:cahts_password@db:5432/cahts_db
+# Should be: postgresql://chats:chats_password@db:5432/chats_db
 ```
 
 ### Frontend Build Error

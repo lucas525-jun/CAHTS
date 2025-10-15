@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# CAHTS Quick Start Script
-# This script helps you quickly set up and start the CAHTS application
+# chats Quick Start Script
+# This script helps you quickly set up and start the chats application
 
 set -e
 
 echo "================================"
-echo "  CAHTS Setup & Start Script"
+echo "  chats Setup & Start Script"
 echo "================================"
 echo ""
 

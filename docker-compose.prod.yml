@@ -4,7 +4,7 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: cahts_db_prod
+    container_name: chats_db_prod
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -12,7 +12,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     networks:
-      - cahts_network
+      - chats_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -23,12 +23,12 @@ services:
   # Redis Cache & Message Broker
   redis:
     image: redis:7-alpine
-    container_name: cahts_redis_prod
+    container_name: chats_redis_prod
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     networks:
-      - cahts_network
+      - chats_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -41,7 +41,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cahts_backend_prod
+    container_name: chats_backend_prod
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
@@ -59,7 +59,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - cahts_network
+      - chats_network
     restart: always
 
   # Celery Worker
@@ -67,7 +67,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cahts_celery_prod
+    container_name: chats_celery_prod
     command: celery -A config worker -l info
     env_file:
       - ./backend/.env
@@ -75,7 +75,7 @@ services:
       - backend
       - redis
     networks:
-      - cahts_network
+      - chats_network
     restart: always
 
   # Celery Beat (Scheduler)
@@ -83,7 +83,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cahts_celery_beat_prod
+    container_name: chats_celery_beat_prod
     command: celery -A config beat -l info
     env_file:
       - ./backend/.env
@@ -91,7 +91,7 @@ services:
       - backend
       - redis
     networks:
-      - cahts_network
+      - chats_network
     restart: always
 
   # React Frontend (Production)
@@ -100,19 +100,19 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
-    container_name: cahts_frontend_prod
+    container_name: chats_frontend_prod
     expose:
       - "80"
     depends_on:
       - backend
     networks:
-      - cahts_network
+      - chats_network
     restart: always
 
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: cahts_nginx_prod
+    container_name: chats_nginx_prod
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
@@ -125,11 +125,11 @@ services:
       - frontend
       - backend
     networks:
-      - cahts_network
+      - chats_network
     restart: always
 
 networks:
-  cahts_network:
+  chats_network:
     driver: bridge
 
 volumes:

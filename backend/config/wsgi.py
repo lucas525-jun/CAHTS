@@ -1,5 +1,5 @@
 """
-WSGI config for CAHTS project.
+WSGI config for chats project.
 """
 
 import os

@@ -1,4 +1,4 @@
-# CAHTS Architecture Overview
+# chats Architecture Overview
 
 ## System Architecture Diagram
 

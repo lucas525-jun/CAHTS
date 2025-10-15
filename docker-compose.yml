@@ -4,19 +4,19 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: cahts_db
+    container_name: chats_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: cahts_db
-      POSTGRES_USER: cahts
-      POSTGRES_PASSWORD: cahts_password
+      POSTGRES_DB: chats_db
+      POSTGRES_USER: chats
+      POSTGRES_PASSWORD: chats_password
     ports:
       - "5432:5432"
     networks:
-      - cahts_network
+      - chats_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cahts"]
+      test: ["CMD-SHELL", "pg_isready -U chats"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,14 +24,14 @@ services:
   # Redis Cache & Message Broker
   redis:
     image: redis:7-alpine
-    container_name: cahts_redis
+    container_name: chats_redis
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
     networks:
-      - cahts_network
+      - chats_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -43,7 +43,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cahts_backend
+    container_name: chats_backend
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
@@ -62,7 +62,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - cahts_network
+      - chats_network
     restart: unless-stopped
 
   # Celery Worker
@@ -70,7 +70,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cahts_celery
+    container_name: chats_celery
     command: celery -A config worker -l info
     volumes:
       - ./backend:/app
@@ -80,7 +80,7 @@ services:
       - backend
       - redis
     networks:
-      - cahts_network
+      - chats_network
     restart: unless-stopped
 
   # Celery Beat (Scheduler)
@@ -88,7 +88,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cahts_celery_beat
+    container_name: chats_celery_beat
     command: celery -A config beat -l info
     volumes:
       - ./backend:/app
@@ -98,7 +98,7 @@ services:
       - backend
       - redis
     networks:
-      - cahts_network
+      - chats_network
     restart: unless-stopped
 
   # React Frontend (Development)
@@ -107,23 +107,23 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: development
-    container_name: cahts_frontend
+    container_name: chats_frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "5173:8080"
     environment:
       - VITE_API_URL=http://localhost:8000/api
       - VITE_WS_URL=ws://localhost:8000/ws
     depends_on:
       - backend
     networks:
-      - cahts_network
+      - chats_network
     restart: unless-stopped
 
 networks:
-  cahts_network:
+  chats_network:
     driver: bridge
 
 volumes:
