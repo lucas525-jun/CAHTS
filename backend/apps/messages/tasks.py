@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.platforms.models import PlatformAccount
 from apps.platforms.services import InstagramService, MessengerService, WhatsAppService
 from .models import Conversation, Message
+from .services import MessageService
 
 logger = logging.getLogger(__name__)
 
@@ -46,28 +47,15 @@ def sync_instagram_messages(platform_account_id):
         platform = PlatformAccount.objects.get(id=platform_account_id, platform='instagram')
         instagram_service = InstagramService()
 
-        ig_account_id = platform.metadata.get('ig_account_id')
-        access_token = platform.access_token  # Should be decrypted
-
-        # Fetch conversations
-        conversations = instagram_service.get_conversations(ig_account_id, access_token, limit=50)
-
-        logger.info(f'Found {len(conversations)} Instagram conversations for platform {platform_account_id}')
-
-        for conv_data in conversations:
-            # TODO: Store conversation and messages in database
-            # This is a placeholder - full implementation would:
-            # 1. Create or update Conversation record
-            # 2. Fetch messages for the conversation
-            # 3. Store new messages
-            # 4. Update conversation metadata
-            pass
+        # Use MessageService to sync
+        stats = MessageService.sync_platform_messages(platform, instagram_service, limit=50)
 
         # Update last sync time
         platform.last_sync_at = timezone.now()
         platform.save()
 
-        return {'status': 'success', 'conversations': len(conversations)}
+        logger.info(f'Instagram sync completed for {platform_account_id}: {stats}')
+        return {'status': 'success', **stats}
 
     except PlatformAccount.DoesNotExist:
         logger.error(f'Platform account {platform_account_id} not found')
@@ -86,23 +74,15 @@ def sync_messenger_messages(platform_account_id):
         platform = PlatformAccount.objects.get(id=platform_account_id, platform='messenger')
         messenger_service = MessengerService()
 
-        page_id = platform.platform_user_id
-        access_token = platform.access_token  # Should be decrypted
-
-        # Fetch conversations
-        conversations = messenger_service.get_conversations(page_id, access_token, limit=50)
-
-        logger.info(f'Found {len(conversations)} Messenger conversations for platform {platform_account_id}')
-
-        for conv_data in conversations:
-            # TODO: Store conversation and messages in database
-            pass
+        # Use MessageService to sync
+        stats = MessageService.sync_platform_messages(platform, messenger_service, limit=50)
 
         # Update last sync time
         platform.last_sync_at = timezone.now()
         platform.save()
 
-        return {'status': 'success', 'conversations': len(conversations)}
+        logger.info(f'Messenger sync completed for {platform_account_id}: {stats}')
+        return {'status': 'success', **stats}
 
     except PlatformAccount.DoesNotExist:
         logger.error(f'Platform account {platform_account_id} not found')

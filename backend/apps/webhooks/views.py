@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from .models import WebhookLog
 from apps.platforms.services import MetaAPIService, InstagramService, MessengerService, WhatsAppService
+from apps.messages.services import MessageService
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +69,9 @@ def instagram_webhook(request):
             parsed_event = instagram_service.parse_webhook_event(event_data)
 
             if parsed_event:
-                # TODO: Process the event (save message to database, trigger notifications, etc.)
                 logger.info(f'Instagram webhook event received: {parsed_event}')
+                # Store message in database and broadcast via WebSocket
+                MessageService.process_webhook_message('instagram', parsed_event)
 
             return Response({'status': 'success'})
 
@@ -129,8 +131,9 @@ def messenger_webhook(request):
             parsed_event = messenger_service.parse_webhook_event(event_data)
 
             if parsed_event:
-                # TODO: Process the event (save message to database, trigger notifications, etc.)
                 logger.info(f'Messenger webhook event received: {parsed_event}')
+                # Store message in database and broadcast via WebSocket
+                MessageService.process_webhook_message('messenger', parsed_event)
                 webhook_log.status = 'processed'
                 webhook_log.save()
 
@@ -191,8 +194,10 @@ def whatsapp_webhook(request):
             parsed_event = whatsapp_service.parse_webhook_event(event_data)
 
             if parsed_event:
-                # TODO: Process the event (save message to database, trigger notifications, etc.)
                 logger.info(f'WhatsApp webhook event received: {parsed_event}')
+                # Store message in database and broadcast via WebSocket
+                if parsed_event.get('event_type') != 'status':
+                    MessageService.process_webhook_message('whatsapp', parsed_event)
                 webhook_log.status = 'processed'
                 webhook_log.processed_at = timezone.now()
                 webhook_log.save()
