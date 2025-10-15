@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { platformsApi, handleApiError } from '../services/api';
 import { toast } from 'sonner';
-import { Loader2, Instagram, MessageCircle, MessageSquare, Settings2, Trash2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Settings2, Trash2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
 import { useAuth } from '../contexts/AuthContext';
 
 const Settings = () => {
@@ -136,11 +137,11 @@ const Settings = () => {
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'instagram':
-        return <Instagram className="h-6 w-6" />;
+        return <InstagramIcon className="h-6 w-6" />;
       case 'messenger':
-        return <MessageCircle className="h-6 w-6" />;
+        return <MessengerIcon className="h-6 w-6" />;
       case 'whatsapp':
-        return <MessageSquare className="h-6 w-6" />;
+        return <WhatsAppIcon className="h-6 w-6" />;
       default:
         return <Settings2 className="h-6 w-6" />;
     }
@@ -302,7 +303,7 @@ const Settings = () => {
                 disabled={connectInstagram.isPending}
               >
                 <div className="p-3 rounded-full bg-gradient-to-r from-instagram-start to-instagram-end">
-                  <Instagram className="h-6 w-6 text-white" />
+                  <InstagramIcon className="h-6 w-6 text-white" />
                 </div>
                 <div className="text-center">
                   <h3 className="font-semibold">Instagram</h3>
@@ -323,7 +324,7 @@ const Settings = () => {
                 disabled={connectMessenger.isPending}
               >
                 <div className="p-3 rounded-full bg-messenger">
-                  <MessageCircle className="h-6 w-6 text-white" />
+                  <MessengerIcon className="h-6 w-6 text-white" />
                 </div>
                 <div className="text-center">
                   <h3 className="font-semibold">Messenger</h3>
@@ -341,7 +342,7 @@ const Settings = () => {
                 <DialogTrigger asChild>
                   <Button variant="outline" className="h-auto flex-col gap-3 p-6">
                     <div className="p-3 rounded-full bg-whatsapp">
-                      <MessageSquare className="h-6 w-6 text-white" />
+                      <WhatsAppIcon className="h-6 w-6 text-white" />
                     </div>
                     <div className="text-center">
                       <h3 className="font-semibold">WhatsApp</h3>

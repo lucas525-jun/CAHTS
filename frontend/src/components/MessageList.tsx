@@ -1,8 +1,8 @@
 import { Message, Platform } from '@/types/chat';
-import { Instagram, MessageCircle, MessageSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
 
 interface MessageListProps {
   messages: Message[];
@@ -10,9 +10,9 @@ interface MessageListProps {
 }
 
 const platformIcons = {
-  instagram: Instagram,
-  messenger: MessageCircle,
-  whatsapp: MessageSquare,
+  instagram: InstagramIcon,
+  messenger: MessengerIcon,
+  whatsapp: WhatsAppIcon,
 };
 
 const platformColors = {

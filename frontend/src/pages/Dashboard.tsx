@@ -1,11 +1,15 @@
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { MessageSquare, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
 import { useDashboardStats, usePlatforms } from '../hooks/api/useDashboard';
 import { useAuth } from '../contexts/AuthContext';
+import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { stats, isLoading, error } = useDashboardStats();
   const { data: platforms, isLoading: platformsLoading } = usePlatforms();
 
@@ -83,7 +87,7 @@ const Dashboard = () => {
                 )}
               </div>
               <div className="h-12 w-12 rounded-full bg-gradient-to-r from-instagram-start to-instagram-end flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-white" />
+                <InstagramIcon className="h-6 w-6 text-white" />
               </div>
             </div>
           </Card>
@@ -99,7 +103,7 @@ const Dashboard = () => {
                 )}
               </div>
               <div className="h-12 w-12 rounded-full bg-whatsapp flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-white" />
+                <WhatsAppIcon className="h-6 w-6 text-white" />
               </div>
             </div>
           </Card>
@@ -115,7 +119,7 @@ const Dashboard = () => {
                 )}
               </div>
               <div className="h-12 w-12 rounded-full bg-messenger flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-white" />
+                <MessengerIcon className="h-6 w-6 text-white" />
               </div>
             </div>
           </Card>
@@ -190,9 +194,9 @@ const Dashboard = () => {
               <p className="text-muted-foreground mb-4">
                 Connect Instagram, Messenger, or WhatsApp to start managing your messages
               </p>
-              <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+              <Button onClick={() => navigate('/settings')}>
                 Connect Platform
-              </button>
+              </Button>
             </div>
           </Card>
         )}

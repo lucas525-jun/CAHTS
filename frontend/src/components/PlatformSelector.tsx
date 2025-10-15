@@ -1,7 +1,7 @@
-import { Instagram, MessageCircle, MessageSquare } from 'lucide-react';
 import { Platform } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
 
 interface PlatformSelectorProps {
   selectedPlatform: Platform | 'all';
@@ -10,9 +10,9 @@ interface PlatformSelectorProps {
 
 export const PlatformSelector = ({ selectedPlatform, onSelectPlatform }: PlatformSelectorProps) => {
   const platforms: { id: Platform | 'all'; label: string; icon: any; gradient?: string }[] = [
-    { id: 'instagram', label: 'Instagram', icon: Instagram, gradient: 'from-instagram-start to-instagram-end' },
-    { id: 'messenger', label: 'Messenger', icon: MessageCircle },
-    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
+    { id: 'instagram', label: 'Instagram', icon: InstagramIcon, gradient: 'from-instagram-start to-instagram-end' },
+    { id: 'messenger', label: 'Messenger', icon: MessengerIcon },
+    { id: 'whatsapp', label: 'WhatsApp', icon: WhatsAppIcon },
   ];
 
   return (

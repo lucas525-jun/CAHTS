@@ -10,8 +10,6 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  Instagram,
-  MessageCircle,
   MessageSquare,
   User,
   CheckCheck,
@@ -20,6 +18,7 @@ import {
   Video,
   File,
 } from 'lucide-react';
+import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
 import { cn } from '@/lib/utils';
 import { useEffect, useRef } from 'react';
 
@@ -63,11 +62,11 @@ const ConversationDetail = () => {
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'instagram':
-        return <Instagram className="h-5 w-5" />;
+        return <InstagramIcon className="h-5 w-5" />;
       case 'messenger':
-        return <MessageCircle className="h-5 w-5" />;
+        return <MessengerIcon className="h-5 w-5" />;
       case 'whatsapp':
-        return <MessageSquare className="h-5 w-5" />;
+        return <WhatsAppIcon className="h-5 w-5" />;
       default:
         return <User className="h-5 w-5" />;
     }
