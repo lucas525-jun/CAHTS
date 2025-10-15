@@ -2,29 +2,39 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
-import { useDashboardStats, usePlatforms } from '../hooks/api/useDashboard';
+import { useDashboardStats, usePlatforms, useDailyStats } from '../hooks/api/useDashboard';
 import { useAuth } from '../contexts/AuthContext';
 import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
 import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { stats, isLoading, error } = useDashboardStats();
   const { data: platforms, isLoading: platformsLoading } = usePlatforms();
+  const { data: dailyStatsData, isLoading: dailyStatsLoading } = useDailyStats(7);
 
-  // Mock daily data for now (will be replaced with real API data)
-  const dailyMessageVolume = [
-    { day: 'Mon', count: 45 },
-    { day: 'Tue', count: 52 },
-    { day: 'Wed', count: 48 },
-    { day: 'Thu', count: 61 },
-    { day: 'Fri', count: 55 },
-    { day: 'Sat', count: 38 },
-    { day: 'Sun', count: 42 },
-  ];
+  // Transform daily stats data for chart
+  const dailyMessageVolume = useMemo(() => {
+    if (!dailyStatsData) return [];
 
-  const totalWeeklyMessages = dailyMessageVolume.reduce((sum, day) => sum + day.count, 0);
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return dailyStatsData.map(stat => {
+      const date = new Date(stat.date);
+      const dayName = dayNames[date.getDay()];
+      return {
+        day: dayName,
+        count: stat.message_count,
+        fullDate: stat.date
+      };
+    });
+  }, [dailyStatsData]);
+
+  const totalWeeklyMessages = useMemo(() => {
+    return dailyMessageVolume.reduce((sum, day) => sum + day.count, 0);
+  }, [dailyMessageVolume]);
 
   if (error) {
     return (
@@ -129,25 +139,35 @@ const Dashboard = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Weekly Message Volume</h2>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dailyMessageVolume}>
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                    {dailyMessageVolume.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={`hsl(var(--chart-${(index % 5) + 1}))`}
-                        opacity={0.8}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {dailyStatsLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : dailyMessageVolume.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyMessageVolume}>
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                      {dailyMessageVolume.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={`hsl(var(--chart-${(index % 5) + 1}))`}
+                          opacity={0.8}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <p>No message data available</p>
+                </div>
+              )}
             </div>
           </Card>
 

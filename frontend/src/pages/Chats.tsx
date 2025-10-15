@@ -125,7 +125,7 @@ const Chats = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <PlatformSelector
         selectedPlatform={selectedPlatform}
         onSelectPlatform={(platform) => {
@@ -135,7 +135,7 @@ const Chats = () => {
       />
 
       {isSearching ? (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden lg:pl-0 pl-16">
           {/* Search Header */}
           <div className="flex items-center gap-3 p-4 border-b">
             <div className="flex-1 relative">
@@ -263,8 +263,8 @@ const Chats = () => {
         </div>
       ) : messages.length > 0 ? (
         <>
-          {/* Search Bar */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Search Bar and Messages */}
+          <div className="flex-1 flex flex-col overflow-hidden lg:pl-0 pl-16">
             <div className="p-4 border-b">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -279,11 +279,15 @@ const Chats = () => {
             </div>
             <MessageList messages={messages} selectedPlatform={selectedPlatform} />
           </div>
-          <StatsPanel platformStats={platformStats} dailyVolume={dailyMessageVolume} />
+
+          {/* Stats Panel - Hidden on mobile/tablet, visible on large screens */}
+          <div className="hidden xl:block">
+            <StatsPanel platformStats={platformStats} dailyVolume={dailyMessageVolume} />
+          </div>
         </>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md">
+        <div className="flex-1 flex items-center justify-center lg:pl-0 pl-16">
+          <div className="text-center max-w-md px-4">
             <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No conversations yet</h3>
             <p className="text-muted-foreground mb-4">
@@ -304,13 +308,13 @@ const Chats = () => {
       )}
 
       {/* WebSocket connection indicator */}
-      <div className="fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-card rounded-full shadow-lg border">
+      <div className="fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-card rounded-full shadow-lg border z-40">
         <div
           className={`h-2 w-2 rounded-full ${
             isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
           }`}
         />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground hidden sm:inline">
           {isConnected ? 'Live' : 'Connecting...'}
         </span>
       </div>

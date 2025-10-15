@@ -1,0 +1,52 @@
+{
+  "name": "CAHTS - Cross-Platform Chat Aggregation System",
+  "short_name": "CAHTS",
+  "description": "Manage all your Instagram, Messenger, and WhatsApp conversations in one unified dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": [
+    "productivity",
+    "social",
+    "business"
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your message statistics and analytics",
+      "url": "/",
+      "icons": []
+    },
+    {
+      "name": "Chats",
+      "short_name": "Chats",
+      "description": "Access all your conversations",
+      "url": "/chats",
+      "icons": []
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Manage platform connections",
+      "url": "/settings",
+      "icons": []
+    }
+  ]
+}
