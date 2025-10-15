@@ -193,7 +193,7 @@ class MessageService:
     @staticmethod
     def sync_platform_messages(platform_account: PlatformAccount, service_instance, limit: int = 50) -> Dict[str, Any]:
         """
-        Sync messages from a platform using its service
+        Sync messages from a platform using its service with improved error handling
 
         Args:
             platform_account: PlatformAccount instance
@@ -208,77 +208,159 @@ class MessageService:
                 'conversations_synced': 0,
                 'messages_synced': 0,
                 'new_messages': 0,
+                'errors': 0,
             }
 
             # Get decrypted access token
             access_token = platform_account.get_decrypted_access_token()
 
+            if not access_token:
+                logger.error(f'No access token for platform {platform_account.id}')
+                return {'error': 'No access token available'}
+
             # Fetch conversations based on platform
-            if platform_account.platform == 'instagram':
-                ig_account_id = platform_account.metadata.get('ig_account_id')
-                conversations = service_instance.get_conversations(ig_account_id, access_token, limit)
-            elif platform_account.platform == 'messenger':
-                page_id = platform_account.platform_user_id
-                conversations = service_instance.get_conversations(page_id, access_token, limit)
-            else:
-                logger.warning(f'Sync not implemented for {platform_account.platform}')
-                return stats
+            conversations = []
+            try:
+                if platform_account.platform == 'instagram':
+                    ig_account_id = platform_account.metadata.get('ig_account_id')
+                    if not ig_account_id:
+                        logger.error('No Instagram account ID in metadata')
+                        return {'error': 'No Instagram account ID configured'}
+                    conversations = service_instance.get_conversations(ig_account_id, access_token, limit)
+                elif platform_account.platform == 'messenger':
+                    page_id = platform_account.platform_user_id
+                    conversations = service_instance.get_conversations(page_id, access_token, limit)
+                else:
+                    logger.warning(f'Sync not implemented for {platform_account.platform}')
+                    return {'error': f'Sync not supported for {platform_account.platform}'}
+            except Exception as e:
+                logger.error(f'Error fetching conversations: {e}')
+                return {'error': f'Failed to fetch conversations: {str(e)}'}
 
             stats['conversations_synced'] = len(conversations)
 
             # Process each conversation
             for conv_data in conversations:
                 try:
+                    conversation_id = conv_data.get('id')
+                    if not conversation_id:
+                        logger.warning('Conversation missing ID, skipping')
+                        stats['errors'] += 1
+                        continue
+
+                    # Extract participant info from conversation data
+                    participants = conv_data.get('participants', {}).get('data', [])
+                    participant_id = 'unknown'
+                    participant_name = 'Unknown'
+
+                    # Find the other participant (not the page/business account)
+                    for participant in participants:
+                        if participant.get('id') != platform_account.platform_user_id:
+                            participant_id = participant.get('id', 'unknown')
+                            participant_name = participant.get('name') or participant.get('username', 'Unknown')
+                            break
+
                     # Get or create conversation
                     conversation, created = Conversation.objects.get_or_create(
                         platform_account=platform_account,
-                        platform_conversation_id=conv_data.get('id'),
+                        platform_conversation_id=conversation_id,
                         defaults={
-                            'participant_id': 'unknown',
-                            'participant_name': 'Unknown',
+                            'participant_id': participant_id,
+                            'participant_name': participant_name,
                             'last_message_at': timezone.now(),
                         }
                     )
 
                     # Fetch messages for this conversation
-                    messages = service_instance.get_conversation_messages(
-                        conv_data.get('id'),
-                        access_token,
-                        limit=limit
-                    )
+                    try:
+                        messages = service_instance.get_conversation_messages(
+                            conversation_id,
+                            access_token,
+                            limit=limit
+                        )
+                    except Exception as e:
+                        logger.error(f'Error fetching messages for conversation {conversation_id}: {e}')
+                        stats['errors'] += 1
+                        continue
 
                     stats['messages_synced'] += len(messages)
 
                     # Store new messages
                     for msg_data in messages:
-                        message_id = msg_data.get('id')
+                        try:
+                            message_id = msg_data.get('id')
+                            if not message_id:
+                                continue
 
-                        # Skip if already exists
-                        if Message.objects.filter(platform_message_id=message_id).exists():
+                            # Skip if already exists
+                            if Message.objects.filter(platform_message_id=message_id).exists():
+                                continue
+
+                            # Extract message details
+                            from_data = msg_data.get('from', {})
+                            sender_id = from_data.get('id', 'unknown')
+                            sender_name = from_data.get('name') or from_data.get('username', 'Unknown')
+
+                            # Determine if incoming (from customer) or outgoing (from page/business)
+                            is_incoming = sender_id != platform_account.platform_user_id
+
+                            # Parse timestamp
+                            created_time = msg_data.get('created_time')
+                            sent_at = timezone.now()
+                            if created_time:
+                                from dateutil import parser as date_parser
+                                try:
+                                    sent_at = date_parser.parse(created_time)
+                                except Exception:
+                                    pass
+
+                            # Determine message type and content
+                            message_text = msg_data.get('message', '')
+                            attachments = msg_data.get('attachments', {}).get('data', [])
+                            message_type = 'text'
+                            media_url = None
+
+                            if attachments:
+                                attachment = attachments[0]
+                                attachment_type = attachment.get('type', '').lower()
+                                if attachment_type in ['image', 'video', 'audio', 'file']:
+                                    message_type = attachment_type
+                                media_url = attachment.get('url') or attachment.get('image_data', {}).get('url')
+
+                            # Create message
+                            Message.objects.create(
+                                conversation=conversation,
+                                platform_account=platform_account,
+                                platform_message_id=message_id,
+                                message_type=message_type,
+                                content=message_text,
+                                media_url=media_url,
+                                sender_id=sender_id,
+                                sender_name=sender_name,
+                                is_incoming=is_incoming,
+                                sent_at=sent_at,
+                            )
+
+                            stats['new_messages'] += 1
+
+                        except Exception as e:
+                            logger.error(f'Error creating message {msg_data.get("id")}: {e}')
+                            stats['errors'] += 1
                             continue
 
-                        # Create message
-                        Message.objects.create(
-                            conversation=conversation,
-                            platform_account=platform_account,
-                            platform_message_id=message_id,
-                            message_type='text',  # Simplified for now
-                            content=msg_data.get('message', ''),
-                            sender_id=msg_data.get('from', {}).get('id', 'unknown'),
-                            sender_name=msg_data.get('from', {}).get('username', 'Unknown'),
-                            is_incoming=True,  # Determine based on from field
-                            sent_at=timezone.now(),
-                        )
-
-                        stats['new_messages'] += 1
-
-                    # Update conversation
+                    # Update conversation with latest message time
                     if messages:
-                        conversation.last_message_at = timezone.now()
-                        conversation.save()
+                        latest_message = Message.objects.filter(
+                            conversation=conversation
+                        ).order_by('-sent_at').first()
+
+                        if latest_message:
+                            conversation.last_message_at = latest_message.sent_at
+                            conversation.save()
 
                 except Exception as e:
                     logger.error(f'Error processing conversation {conv_data.get("id")}: {e}')
+                    stats['errors'] += 1
                     continue
 
             logger.info(f'Sync completed for {platform_account.platform}: {stats}')

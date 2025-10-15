@@ -188,11 +188,19 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     'sync-messages-every-5-minutes': {
         'task': 'apps.messages.tasks.sync_all_platforms',
-        'schedule': 300.0,  # 5 minutes
+        'schedule': 120.0,  # 5 minutes
     },
     'aggregate-daily-analytics': {
         'task': 'apps.analytics.tasks.aggregate_daily_analytics',
         'schedule': 3600.0,  # 1 hour
+    },
+    'refresh-expiring-tokens-daily': {
+        'task': 'apps.platforms.tasks.refresh_expiring_tokens',
+        'schedule': 86400.0,  # 24 hours (1 day)
+    },
+    'deactivate-expired-tokens-daily': {
+        'task': 'apps.platforms.tasks.deactivate_expired_tokens',
+        'schedule': 86400.0,  # 24 hours (1 day)
     },
 }
 

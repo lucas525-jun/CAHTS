@@ -79,23 +79,36 @@ class PlatformViewSet(viewsets.ViewSet):
 
         phone_number_id = serializer.validated_data['phone_number_id']
         access_token = serializer.validated_data['access_token']
-        business_account_id = serializer.validated_data.get('business_account_id', '')
+        business_account_id = serializer.validated_data.get('business_account_id', phone_number_id)
 
-        # Test the connection
+        # Validate the credentials
         whatsapp_service = WhatsAppService()
-        # Note: In production, you'd verify the token is valid by making a test API call
+        validation_result = whatsapp_service.validate_credentials(phone_number_id, access_token)
+
+        if not validation_result.get('valid'):
+            return Response({
+                'error': 'invalid_credentials',
+                'message': validation_result.get('error', 'Failed to validate WhatsApp credentials')
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Use validated data
+        verified_name = validation_result.get('verified_name', phone_number_id)
+        display_phone = validation_result.get('display_phone_number', phone_number_id)
 
         # Encrypt and store token
         platform_account = PlatformAccount.objects.create(
             user=request.user,
             platform='whatsapp',
-            platform_user_id=business_account_id,
-            platform_username=phone_number_id,
-            access_token=access_token,  # Should be encrypted
+            platform_user_id=business_account_id or phone_number_id,
+            platform_username=verified_name,
+            access_token=access_token,  # Will be encrypted on save
             is_active=True,
             metadata={
                 'phone_number_id': phone_number_id,
                 'business_account_id': business_account_id,
+                'verified_name': verified_name,
+                'display_phone_number': display_phone,
+                'quality_rating': validation_result.get('quality_rating'),
             }
         )
 
@@ -254,13 +267,27 @@ class PlatformViewSet(viewsets.ViewSet):
                 user=request.user
             )
 
-            # Trigger sync task (will implement with Celery)
-            # For now, just return success
-            platform_account.last_sync_at = timezone.now()
-            platform_account.save()
+            # Trigger appropriate sync task based on platform
+            from apps.messages.tasks import (
+                sync_instagram_messages,
+                sync_messenger_messages,
+                sync_whatsapp_messages
+            )
+
+            task_id = None
+            if platform_account.platform == 'instagram':
+                result = sync_instagram_messages.delay(str(platform_account.id))
+                task_id = result.id
+            elif platform_account.platform == 'messenger':
+                result = sync_messenger_messages.delay(str(platform_account.id))
+                task_id = result.id
+            elif platform_account.platform == 'whatsapp':
+                result = sync_whatsapp_messages.delay(str(platform_account.id))
+                task_id = result.id
 
             return Response({
                 'message': 'Sync started',
+                'task_id': task_id,
                 'platform': PlatformAccountSerializer(platform_account).data
             })
         except PlatformAccount.DoesNotExist:

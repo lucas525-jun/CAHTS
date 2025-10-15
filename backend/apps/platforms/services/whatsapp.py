@@ -279,6 +279,66 @@ class WhatsAppService:
 
         return hmac.compare_digest(expected_signature, received_signature)
 
+    def validate_credentials(
+        self,
+        phone_number_id: str,
+        access_token: str
+    ) -> Dict[str, Any]:
+        """
+        Validate WhatsApp Business credentials by fetching phone number info
+
+        Args:
+            phone_number_id: WhatsApp Phone Number ID
+            access_token: Access token
+
+        Returns:
+            Dict with 'valid' boolean and optional error message or phone data
+        """
+        url = f'{self.base_url}/{phone_number_id}'
+
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+        }
+
+        params = {
+            'fields': 'id,verified_name,display_phone_number,quality_rating'
+        }
+
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            return {
+                'valid': True,
+                'phone_number_id': data.get('id'),
+                'verified_name': data.get('verified_name'),
+                'display_phone_number': data.get('display_phone_number'),
+                'quality_rating': data.get('quality_rating')
+            }
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                return {
+                    'valid': False,
+                    'error': 'Invalid access token'
+                }
+            elif e.response.status_code == 404:
+                return {
+                    'valid': False,
+                    'error': 'Phone number ID not found'
+                }
+            else:
+                return {
+                    'valid': False,
+                    'error': f'HTTP {e.response.status_code}: {e.response.text}'
+                }
+        except requests.exceptions.RequestException as e:
+            logger.error(f'Error validating WhatsApp credentials: {e}')
+            return {
+                'valid': False,
+                'error': f'Connection error: {str(e)}'
+            }
+
     def parse_webhook_event(self, event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Parse WhatsApp webhook event into standardized format
