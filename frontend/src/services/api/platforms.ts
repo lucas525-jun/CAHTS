@@ -65,6 +65,28 @@ export const platformsApi = {
     );
     return response.data;
   },
+
+  /**
+   * Complete Instagram OAuth - exchange code for token (stateless)
+   */
+  completeInstagramOAuth: async (code: string, state: string): Promise<{ message: string; platform: PlatformAccount }> => {
+    const response = await apiClient.post<{ message: string; platform: PlatformAccount }>(
+      '/platforms/instagram/complete-oauth/',
+      { code, state }
+    );
+    return response.data;
+  },
+
+  /**
+   * Complete Messenger OAuth - exchange code for token (stateless)
+   */
+  completeMessengerOAuth: async (code: string, state: string): Promise<{ message: string; platform: PlatformAccount }> => {
+    const response = await apiClient.post<{ message: string; platform: PlatformAccount }>(
+      '/platforms/messenger/complete-oauth/',
+      { code, state }
+    );
+    return response.data;
+  },
 };
 
 export default platformsApi;

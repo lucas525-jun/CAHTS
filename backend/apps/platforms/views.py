@@ -267,3 +267,165 @@ class PlatformViewSet(viewsets.ViewSet):
             return Response({
                 'error': 'Platform not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['post'], url_path='instagram/complete-oauth')
+    def complete_instagram_oauth(self, request):
+        """
+        Stateless Instagram OAuth completion endpoint
+        Called by frontend with code and state from OAuth callback
+        """
+        code = request.data.get('code')
+        state = request.data.get('state')
+
+        if not code:
+            return Response({
+                'error': 'missing_code',
+                'message': 'Authorization code is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            meta_service = MetaAPIService()
+
+            # Exchange code for access token
+            token_response = meta_service.exchange_code_for_token(code)
+            short_lived_token = token_response.get('access_token')
+
+            if not short_lived_token:
+                return Response({
+                    'error': 'token_exchange_failed',
+                    'message': 'Failed to exchange code for token'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get long-lived token (60 days)
+            long_lived_response = meta_service.get_long_lived_token(short_lived_token)
+            access_token = long_lived_response.get('access_token')
+            expires_in = long_lived_response.get('expires_in', 5184000)  # Default 60 days
+
+            # Get user's pages
+            pages = meta_service.get_user_pages(access_token)
+
+            if not pages:
+                return Response({
+                    'error': 'no_pages',
+                    'message': 'No Facebook Pages found. Please create a page first.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Use the first page (in production, let user select)
+            page = pages[0]
+            page_id = page['id']
+            page_name = page['name']
+            page_access_token = page['access_token']
+
+            # Get Instagram Business Account linked to the page
+            ig_account_id = meta_service.get_instagram_business_account(page_id, page_access_token)
+
+            if not ig_account_id:
+                return Response({
+                    'error': 'no_instagram_account',
+                    'message': 'No Instagram Business Account linked to this page.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Store Instagram connection
+            platform_account, created = PlatformAccount.objects.update_or_create(
+                user=request.user,
+                platform='instagram',
+                platform_user_id=ig_account_id,
+                defaults={
+                    'platform_username': page_name,
+                    'access_token': page_access_token,  # Will be encrypted when save() is fixed
+                    'token_expires_at': timezone.now() + timedelta(seconds=expires_in),
+                    'is_active': True,
+                    'metadata': {
+                        'page_id': page_id,
+                        'page_name': page_name,
+                        'ig_account_id': ig_account_id,
+                    }
+                }
+            )
+
+            return Response({
+                'message': 'Instagram connected successfully',
+                'platform': PlatformAccountSerializer(platform_account).data
+            }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'error': 'connection_failed',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], url_path='messenger/complete-oauth')
+    def complete_messenger_oauth(self, request):
+        """
+        Stateless Messenger OAuth completion endpoint
+        Called by frontend with code and state from OAuth callback
+        """
+        code = request.data.get('code')
+        state = request.data.get('state')
+
+        if not code:
+            return Response({
+                'error': 'missing_code',
+                'message': 'Authorization code is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            meta_service = MetaAPIService()
+
+            # Exchange code for access token
+            token_response = meta_service.exchange_code_for_token(code)
+            short_lived_token = token_response.get('access_token')
+
+            if not short_lived_token:
+                return Response({
+                    'error': 'token_exchange_failed',
+                    'message': 'Failed to exchange code for token'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get long-lived token (60 days)
+            long_lived_response = meta_service.get_long_lived_token(short_lived_token)
+            access_token = long_lived_response.get('access_token')
+            expires_in = long_lived_response.get('expires_in', 5184000)  # Default 60 days
+
+            # Get user's pages
+            pages = meta_service.get_user_pages(access_token)
+
+            if not pages:
+                return Response({
+                    'error': 'no_pages',
+                    'message': 'No Facebook Pages found. Please create a page first.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Use the first page (in production, let user select)
+            page = pages[0]
+            page_id = page['id']
+            page_name = page['name']
+            page_access_token = page['access_token']
+
+            # Store Messenger connection
+            platform_account, created = PlatformAccount.objects.update_or_create(
+                user=request.user,
+                platform='messenger',
+                platform_user_id=page_id,
+                defaults={
+                    'platform_username': page_name,
+                    'access_token': page_access_token,  # Will be encrypted when save() is fixed
+                    'token_expires_at': timezone.now() + timedelta(seconds=expires_in),
+                    'is_active': True,
+                    'metadata': {
+                        'page_id': page_id,
+                        'page_name': page_name,
+                    }
+                }
+            )
+
+            return Response({
+                'message': 'Messenger connected successfully',
+                'platform': PlatformAccountSerializer(platform_account).data
+            }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'error': 'connection_failed',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

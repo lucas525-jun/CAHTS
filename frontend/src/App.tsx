@@ -13,6 +13,7 @@ import ConversationDetail from "./pages/ConversationDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import OAuthCallback from "./pages/OAuthCallback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
 
             {/* Protected routes */}
             <Route

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,13 @@ import { toast } from 'sonner';
 import { Loader2, Settings2, Trash2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { InstagramIcon, MessengerIcon, WhatsAppIcon } from '@/components/icons/PlatformIcons';
 import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to generate secure random state
+const generateState = (): string => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+};
 
 const Settings = () => {
   const { user } = useAuth();
@@ -24,31 +31,56 @@ const Settings = () => {
     queryFn: () => platformsApi.list(),
   });
 
+  // Listen for OAuth callback messages from popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verify origin for security
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      const { type, platform, error, description } = event.data;
+
+      if (type === 'oauth_success') {
+        toast.success(`${platform} connected successfully!`);
+        queryClient.invalidateQueries({ queryKey: ['platforms'] });
+      } else if (type === 'oauth_error') {
+        toast.error(description || error || 'OAuth connection failed');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [queryClient]);
+
   // Connect Instagram mutation
   const connectInstagram = useMutation({
     mutationFn: () => platformsApi.connectInstagram(),
     onSuccess: (data) => {
+      // Generate and store state in localStorage for CSRF protection
+      const state = generateState();
+      localStorage.setItem('oauth_state', state);
+      localStorage.setItem('oauth_platform', 'instagram');
+
+      // Append state to OAuth URL
+      const oauthUrl = new URL(data.oauth_url);
+      oauthUrl.searchParams.set('state', state);
+
+      // Update redirect_uri to point to frontend callback
+      const callbackUrl = `${window.location.origin}/oauth/callback`;
+      oauthUrl.searchParams.set('redirect_uri', callbackUrl);
+
       // Open OAuth popup
       const width = 600;
       const height = 700;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      const popup = window.open(
-        data.oauth_url,
+      window.open(
+        oauthUrl.toString(),
         'Instagram OAuth',
         `width=${width},height=${height},left=${left},top=${top}`
       );
-
-      // Poll for popup close
-      const pollTimer = setInterval(() => {
-        if (popup && popup.closed) {
-          clearInterval(pollTimer);
-          // Refresh platforms list
-          queryClient.invalidateQueries({ queryKey: ['platforms'] });
-          toast.success('Instagram connection initiated. Check your popup!');
-        }
-      }, 500);
     },
     onError: (error) => {
       toast.error(handleApiError(error));
@@ -59,27 +91,30 @@ const Settings = () => {
   const connectMessenger = useMutation({
     mutationFn: () => platformsApi.connectMessenger(),
     onSuccess: (data) => {
+      // Generate and store state in localStorage for CSRF protection
+      const state = generateState();
+      localStorage.setItem('oauth_state', state);
+      localStorage.setItem('oauth_platform', 'messenger');
+
+      // Append state to OAuth URL
+      const oauthUrl = new URL(data.oauth_url);
+      oauthUrl.searchParams.set('state', state);
+
+      // Update redirect_uri to point to frontend callback
+      const callbackUrl = `${window.location.origin}/oauth/callback`;
+      oauthUrl.searchParams.set('redirect_uri', callbackUrl);
+
       // Open OAuth popup
       const width = 600;
       const height = 700;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      const popup = window.open(
-        data.oauth_url,
+      window.open(
+        oauthUrl.toString(),
         'Messenger OAuth',
         `width=${width},height=${height},left=${left},top=${top}`
       );
-
-      // Poll for popup close
-      const pollTimer = setInterval(() => {
-        if (popup && popup.closed) {
-          clearInterval(pollTimer);
-          // Refresh platforms list
-          queryClient.invalidateQueries({ queryKey: ['platforms'] });
-          toast.success('Messenger connection initiated. Check your popup!');
-        }
-      }, 500);
     },
     onError: (error) => {
       toast.error(handleApiError(error));
