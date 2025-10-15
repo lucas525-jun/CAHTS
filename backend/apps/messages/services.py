@@ -210,8 +210,8 @@ class MessageService:
                 'new_messages': 0,
             }
 
-            # Get access token (should be decrypted in production)
-            access_token = platform_account.access_token
+            # Get decrypted access token
+            access_token = platform_account.get_decrypted_access_token()
 
             # Fetch conversations based on platform
             if platform_account.platform == 'instagram':

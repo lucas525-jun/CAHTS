@@ -199,8 +199,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
             message_type = validated_data.get('message_type', 'text')
             media_url = validated_data.get('media_url')
 
-            # Get access token
-            access_token = platform_account.decrypt_token(platform_account.access_token)
+            # Get decrypted access token
+            access_token = platform_account.get_decrypted_access_token()
 
             # Send message based on platform
             response_data = None

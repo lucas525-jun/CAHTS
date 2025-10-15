@@ -131,12 +131,12 @@ class MetaAPIService:
         """
         url = f'{self.base_url}/me/accounts'
 
-        params = {
-            'access_token': access_token,
+        headers = {
+            'Authorization': f'Bearer {access_token}',
         }
 
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             data = response.json()
             return data.get('data', [])
@@ -159,11 +159,14 @@ class MetaAPIService:
 
         params = {
             'fields': 'instagram_business_account',
-            'access_token': page_access_token,
+        }
+
+        headers = {
+            'Authorization': f'Bearer {page_access_token}',
         }
 
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, headers=headers, timeout=10)
             response.raise_for_status()
             data = response.json()
             ig_account = data.get('instagram_business_account', {})
@@ -198,15 +201,19 @@ class MetaAPIService:
         if params is None:
             params = {}
 
-        params['access_token'] = access_token
+        # Use Authorization header instead of query parameter for security
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json',
+        }
 
         try:
             if method.upper() == 'GET':
-                response = requests.get(url, params=params, timeout=10)
+                response = requests.get(url, params=params, headers=headers, timeout=10)
             elif method.upper() == 'POST':
-                response = requests.post(url, params=params, json=data, timeout=10)
+                response = requests.post(url, params=params, json=data, headers=headers, timeout=10)
             elif method.upper() == 'DELETE':
-                response = requests.delete(url, params=params, timeout=10)
+                response = requests.delete(url, params=params, headers=headers, timeout=10)
             else:
                 raise ValueError(f'Unsupported HTTP method: {method}')
 
