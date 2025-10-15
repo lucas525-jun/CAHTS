@@ -2,6 +2,7 @@ import { Message, Platform } from '@/types/chat';
 import { Instagram, MessageCircle, MessageSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface MessageListProps {
   messages: Message[];
@@ -21,9 +22,15 @@ const platformColors = {
 };
 
 export const MessageList = ({ messages, selectedPlatform }: MessageListProps) => {
-  const filteredMessages = selectedPlatform === 'all' 
-    ? messages 
+  const navigate = useNavigate();
+
+  const filteredMessages = selectedPlatform === 'all'
+    ? messages
     : messages.filter(m => m.platform === selectedPlatform);
+
+  const handleMessageClick = (conversationId: string) => {
+    navigate(`/chats/${conversationId}`);
+  };
 
   return (
     <div className="flex-1 p-6 overflow-y-auto">
@@ -37,13 +44,14 @@ export const MessageList = ({ messages, selectedPlatform }: MessageListProps) =>
                 'p-4 hover:shadow-md transition-shadow cursor-pointer',
                 message.unread && 'border-l-4 border-l-primary'
               )}
+              onClick={() => handleMessageClick(message.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
                   <Icon className={cn('h-5 w-5 mt-1', platformColors[message.platform])} />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-card-foreground">{message.contactName}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{message.message}</p>
+                    <h3 className="font-semibold text-card-foreground">{message.sender}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{message.content}</p>
                   </div>
                 </div>
                 <span className="text-sm text-muted-foreground">{message.timestamp}</span>

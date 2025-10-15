@@ -23,26 +23,27 @@ export const platformsApi = {
   /**
    * Connect Instagram account - initiates OAuth flow
    */
-  connectInstagram: async (): Promise<{ auth_url: string }> => {
-    const response = await apiClient.post<{ auth_url: string }>('/platforms/connect/instagram/');
+  connectInstagram: async (): Promise<{ oauth_url: string; message: string }> => {
+    const response = await apiClient.get<{ oauth_url: string; message: string }>('/platforms/instagram/connect/');
     return response.data;
   },
 
   /**
    * Connect Messenger account - initiates OAuth flow
    */
-  connectMessenger: async (): Promise<{ auth_url: string }> => {
-    const response = await apiClient.post<{ auth_url: string }>('/platforms/connect/messenger/');
+  connectMessenger: async (): Promise<{ oauth_url: string; message: string }> => {
+    const response = await apiClient.get<{ oauth_url: string; message: string }>('/platforms/messenger/connect/');
     return response.data;
   },
 
   /**
    * Connect WhatsApp account
    */
-  connectWhatsApp: async (phoneNumber: string, accessToken: string): Promise<PlatformAccount> => {
-    const response = await apiClient.post<PlatformAccount>('/platforms/connect/whatsapp/', {
-      phone_number: phoneNumber,
+  connectWhatsApp: async (phoneNumberId: string, accessToken: string, businessAccountId?: string): Promise<{ message: string; platform: PlatformAccount }> => {
+    const response = await apiClient.post<{ message: string; platform: PlatformAccount }>('/platforms/whatsapp/connect/', {
+      phone_number_id: phoneNumberId,
       access_token: accessToken,
+      business_account_id: businessAccountId || '',
     });
     return response.data;
   },

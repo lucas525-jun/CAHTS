@@ -8,6 +8,8 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { Navigation } from "./components/Navigation";
 import Dashboard from "./pages/Dashboard";
 import Chats from "./pages/Chats";
+import Settings from "./pages/Settings";
+import ConversationDetail from "./pages/ConversationDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -44,6 +46,8 @@ const App = () => (
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/chats" element={<Chats />} />
+                        <Route path="/chats/:id" element={<ConversationDetail />} />
+                        <Route path="/settings" element={<Settings />} />
                         <Route path="/404" element={<NotFound />} />
                         <Route path="*" element={<Navigate to="/404" replace />} />
                       </Routes>

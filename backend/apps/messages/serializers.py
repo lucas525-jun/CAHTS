@@ -78,3 +78,23 @@ class ConversationDetailSerializer(ConversationSerializer):
 
     class Meta(ConversationSerializer.Meta):
         fields = ConversationSerializer.Meta.fields + ['messages']
+
+
+class SendMessageSerializer(serializers.Serializer):
+    """Serializer for sending messages"""
+
+    content = serializers.CharField(required=True, max_length=5000, help_text="Message text content")
+    message_type = serializers.ChoiceField(
+        choices=['text', 'image', 'video', 'audio', 'file'],
+        default='text',
+        help_text="Type of message"
+    )
+    media_url = serializers.URLField(required=False, allow_blank=True, help_text="URL for media messages")
+
+    def validate(self, data):
+        """Validate that media_url is provided for non-text messages"""
+        if data.get('message_type') != 'text' and not data.get('media_url'):
+            raise serializers.ValidationError({
+                'media_url': 'Media URL is required for non-text messages'
+            })
+        return data

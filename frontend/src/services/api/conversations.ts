@@ -39,6 +39,12 @@ export interface ConversationFilters {
   page_size?: number;
 }
 
+export interface SendMessageData {
+  content: string;
+  message_type?: 'text' | 'image' | 'video' | 'audio' | 'file';
+  media_url?: string;
+}
+
 export const conversationsApi = {
   /**
    * Get list of conversations with optional filters
@@ -91,6 +97,17 @@ export const conversationsApi = {
   unarchive: async (id: string): Promise<{ message: string; conversation: Conversation }> => {
     const response = await apiClient.post<{ message: string; conversation: Conversation }>(
       `/messages/conversations/${id}/unarchive/`
+    );
+    return response.data;
+  },
+
+  /**
+   * Send a message in a conversation
+   */
+  sendMessage: async (id: string, data: SendMessageData): Promise<{ message: string; data: Message }> => {
+    const response = await apiClient.post<{ message: string; data: Message }>(
+      `/messages/conversations/${id}/send-message/`,
+      data
     );
     return response.data;
   },
