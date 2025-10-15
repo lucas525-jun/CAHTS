@@ -20,22 +20,32 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password_confirm = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ['email', 'username', 'password', 'password_confirm', 'first_name', 'last_name']
+        fields = ['email', 'password', 'first_name', 'last_name']
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
-        return attrs
+    def validate_email(self, value):
+        """Check if email is already registered"""
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
     def create(self, validated_data):
-        validated_data.pop('password_confirm')
+        # Generate username from email (use part before @)
+        email = validated_data['email']
+        base_username = email.split('@')[0]
+        username = base_username
+
+        # Ensure username is unique
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
         user = User.objects.create_user(
             email=validated_data['email'],
-            username=validated_data['username'],
+            username=username,
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', '')
