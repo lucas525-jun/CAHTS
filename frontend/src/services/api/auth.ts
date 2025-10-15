@@ -13,8 +13,10 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
-  access: string;
-  refresh: string;
+  tokens: {
+    access: string;
+    refresh: string;
+  };
   user: {
     id: string;
     email: string;
@@ -37,8 +39,8 @@ export const authApi = {
    */
   register: async (data: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register/', data);
-    const { access, refresh } = response.data;
-    setAuthTokens(access, refresh);
+    const { tokens } = response.data;
+    setAuthTokens(tokens.access, tokens.refresh);
     return response.data;
   },
 
@@ -47,8 +49,8 @@ export const authApi = {
    */
   login: async (data: LoginData): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/login/', data);
-    const { access, refresh } = response.data;
-    setAuthTokens(access, refresh);
+    const { tokens } = response.data;
+    setAuthTokens(tokens.access, tokens.refresh);
     return response.data;
   },
 
