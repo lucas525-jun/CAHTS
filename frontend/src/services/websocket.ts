@@ -14,7 +14,7 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // Start with 1 second
   private maxReconnectDelay = 30000; // Max 30 seconds
-  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private reconnectTimeout: number | null = null;
   private userId: string | null = null;
 
   /**
@@ -30,15 +30,25 @@ class WebSocketService {
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
     const token = localStorage.getItem('access_token');
 
-    // Construct WebSocket URL with user ID and token
-    const url = `${wsUrl}/messages/${userId}/?token=${token}`;
+    // CRITICAL: Check if token exists
+    if (!token) {
+      console.error('❌ No access token found in localStorage. Cannot connect to WebSocket.');
+      console.error('Please ensure you are logged in and have a valid token.');
+      return;
+    }
 
-    console.log('Connecting to WebSocket:', url.replace(token || '', 'TOKEN'));
+    // Construct WebSocket URL with user ID and token (URL encode the token)
+    const url = `${wsUrl}/messages/${userId}/?token=${encodeURIComponent(token)}`;
+
+    console.log('🔌 Connecting to WebSocket...');
+    console.log('  User ID:', userId);
+    console.log('  Token length:', token.length);
+    console.log('  Token preview:', token.substring(0, 20) + '...');
 
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
+      console.log('✅ WebSocket connected successfully!');
       this.reconnectAttempts = 0;
       this.reconnectDelay = 1000;
 

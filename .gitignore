@@ -115,3 +115,6 @@ secrets/
 *.pem
 *.key
 *.crt
+
+
+CLAUDE.md

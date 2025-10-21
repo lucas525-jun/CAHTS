@@ -74,10 +74,16 @@ class ConversationSerializer(serializers.ModelSerializer):
 class ConversationDetailSerializer(ConversationSerializer):
     """Detailed serializer with recent messages"""
 
-    messages = MessageSerializer(many=True, read_only=True)
+    messages = serializers.SerializerMethodField()
 
     class Meta(ConversationSerializer.Meta):
         fields = ConversationSerializer.Meta.fields + ['messages']
+
+    def get_messages(self, obj):
+        """Get recent messages with optional limit from context"""
+        messages_limit = self.context.get('messages_limit', 50)
+        recent_messages = obj.messages.all().order_by('-sent_at')[:messages_limit]
+        return MessageSerializer(recent_messages, many=True).data
 
 
 class SendMessageSerializer(serializers.Serializer):

@@ -58,9 +58,16 @@ class WhatsAppService:
         }
 
         try:
+            logger.info(f'Sending WhatsApp message to {recipient_phone}')
+            logger.info(f'Request data: {data}')
             response = requests.post(url, headers=headers, json=data, timeout=10)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            error_detail = e.response.text if hasattr(e.response, 'text') else str(e)
+            logger.error(f'Error sending WhatsApp message: {e}')
+            logger.error(f'WhatsApp API Error Response: {error_detail}')
+            return None
         except requests.exceptions.RequestException as e:
             logger.error(f'Error sending WhatsApp message: {e}')
             return None
@@ -317,10 +324,19 @@ class WhatsAppService:
                 'quality_rating': data.get('quality_rating')
             }
         except requests.exceptions.HTTPError as e:
+            # Try to extract detailed error message from response JSON
+            error_message = 'Unknown error'
+            try:
+                error_data = e.response.json()
+                if 'error' in error_data:
+                    error_message = error_data['error'].get('message', error_data['error'])
+            except:
+                error_message = e.response.text
+
             if e.response.status_code == 401:
                 return {
                     'valid': False,
-                    'error': 'Invalid access token'
+                    'error': error_message
                 }
             elif e.response.status_code == 404:
                 return {
@@ -330,7 +346,7 @@ class WhatsAppService:
             else:
                 return {
                     'valid': False,
-                    'error': f'HTTP {e.response.status_code}: {e.response.text}'
+                    'error': f'HTTP {e.response.status_code}: {error_message}'
                 }
         except requests.exceptions.RequestException as e:
             logger.error(f'Error validating WhatsApp credentials: {e}')

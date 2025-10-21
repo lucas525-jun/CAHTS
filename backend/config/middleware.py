@@ -53,7 +53,7 @@ class JWTAuthMiddleware(BaseMiddleware):
         token = None
         if 'token' in query_params:
             token = query_params['token'][0]
-            logger.info(f"WebSocket token found in query params")
+            logger.info(f"WebSocket token found in query params: {token[:20]}...")
 
         # If no token in query params, try headers
         if not token:
@@ -61,13 +61,15 @@ class JWTAuthMiddleware(BaseMiddleware):
             auth_header = headers.get(b'authorization', b'').decode()
             if auth_header.startswith('Bearer '):
                 token = auth_header[7:]
-                logger.info(f"WebSocket token found in headers")
+                logger.info(f"WebSocket token found in headers: {token[:20]}...")
 
         # Authenticate user
         if token:
+            logger.info(f"Attempting to authenticate WebSocket with token")
             scope['user'] = await get_user_from_token(token)
+            logger.info(f"WebSocket authenticated user: {scope['user']}, is_authenticated: {scope['user'].is_authenticated if hasattr(scope['user'], 'is_authenticated') else False}")
         else:
-            logger.warning("WebSocket no token provided")
+            logger.warning(f"WebSocket no token provided. Query string: {query_string[:100]}")
             scope['user'] = AnonymousUser()
 
         return await super().__call__(scope, receive, send)

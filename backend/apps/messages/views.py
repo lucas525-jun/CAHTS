@@ -113,9 +113,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
             # Get recent messages for this conversation
             messages_limit = int(request.query_params.get('messages_limit', 50))
-            conversation.messages = conversation.messages.all().order_by('-sent_at')[:messages_limit]
+            recent_messages = conversation.messages.all().order_by('-sent_at')[:messages_limit]
 
-            serializer = ConversationDetailSerializer(conversation)
+            # Use ConversationDetailSerializer which will fetch messages
+            serializer = ConversationDetailSerializer(conversation, context={'messages_limit': messages_limit})
             return Response(serializer.data)
         except Conversation.DoesNotExist:
             return Response({
@@ -178,6 +179,60 @@ class ConversationViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': 'Conversation not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['post'], url_path='create')
+    def create_conversation(self, request):
+        """Create a new conversation"""
+        phone_number = request.data.get('phone_number')
+        contact_name = request.data.get('contact_name')
+        platform = request.data.get('platform', 'whatsapp')
+
+        if not phone_number:
+            return Response({
+                'error': 'Phone number is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the user's platform account
+        try:
+            platform_account = PlatformAccount.objects.get(
+                user=request.user,
+                platform=platform,
+                is_active=True
+            )
+        except PlatformAccount.DoesNotExist:
+            return Response({
+                'error': f'No active {platform} account found. Please connect {platform} first.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if conversation already exists
+        existing_conv = Conversation.objects.filter(
+            platform_account=platform_account,
+            participant_id=phone_number
+        ).first()
+
+        if existing_conv:
+            return Response({
+                'message': 'Conversation already exists',
+                'conversation': ConversationSerializer(existing_conv).data
+            }, status=status.HTTP_200_OK)
+
+        # Create new conversation
+        conversation = Conversation.objects.create(
+            platform_account=platform_account,
+            participant_id=phone_number,
+            participant_name=contact_name or f'Contact {phone_number[-4:]}',
+            platform_conversation_id=f'{platform}_{phone_number}',
+            last_message_at=timezone.now(),
+            unread_count=0,
+            is_archived=False
+        )
+
+        logger.info(f'Created new conversation: {conversation.id} for {phone_number}')
+
+        return Response({
+            'message': 'Conversation created successfully',
+            'conversation': ConversationSerializer(conversation).data
+        }, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], url_path='send-message')
     def send_message(self, request, pk=None):

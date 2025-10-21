@@ -30,4 +30,4 @@ class WhatsAppConnectionSerializer(serializers.Serializer):
     """Serializer for WhatsApp connection"""
     phone_number_id = serializers.CharField(required=True)
     access_token = serializers.CharField(required=True, write_only=True)
-    business_account_id = serializers.CharField(required=False)
+    business_account_id = serializers.CharField(required=False, allow_blank=True)
